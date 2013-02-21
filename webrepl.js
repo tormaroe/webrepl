@@ -1,7 +1,7 @@
 (function () {
-	
-    if (!window.skycmd)
-        window.skycmd = {};
+
+    if (!window.webrepl)
+        window.webrepl = {};
 
     window.keymap = {
         backspace: 8,
@@ -38,16 +38,34 @@
         }
     };
 
+
+    var blink = function (show) {
+        $('#cursor').toggle(show);
+        setTimeout(function () { blink(!show); }, 600);
+    };
+
     console.log("DEBUG: defining 'terminal'");
 
-    skycmd.terminal = function (config) {
+    webrepl.terminal = function (config) {
+
     	var $container = config.container;
-    	var commandHandler = config.commandHandler;
-    	var state = config.state;
     	var prompt = config.prompt;
-    	var welcome = config.welcome;
 
         var $currentConsoleLine;
+
+        var newCommandLine = function () {
+            $container.append('<div><span class="path">' + prompt + '</span><span class="console"></span><span id="cursor">_</span></div>');
+            $currentConsoleLine = $('.console:last');
+        };
+
+        var cls = function () {
+        	$container.empty();
+        };
+
+    	var commandHandler = config.commandHandler;
+    	var state = config.state;
+    	var welcome = config.welcome;
+
         var currentPath = '';
         var currentFolder = '';
         var commandHistory = [];
@@ -55,33 +73,14 @@
         var firstname = '';
         var loggedIn = false;
         var currentId;
-        var searchTerm = '';
-        var searchIndex = 0;
-        var matches = [];
 
         var runningCommand = false;
         var term = this;
 
-        init();
-
-        function init() {
-            var welcomeText = (welcome ? welcome : "Welcome to WebREPL!") + '<br /><br />';
-            $container.html(welcomeText);
-            newCommandLine();
-            $body.keydown(onKeyDown);
-            setTimeout(blink, 600);
-        }
-
-        function onKeyDown(e) {
+        var onKeyDown = function (e) {
             var key = e.which;
             var handled = false;
             var text = $currentConsoleLine.text();
-
-            // remove photo
-            if ($('#overlay').size() > 0) {
-                $('#overlay').remove();
-                return true;
-            }
 
             // ignore any keystrokes with alt, ctrl or cmd
             if (e.metaKey || e.altKey || e.ctrlKey || runningCommand) {
@@ -126,7 +125,6 @@
             if (e.shiftKey && keymap.uppercase[key]) {
                 var character = keymap.uppercase[key];
                 $currentConsoleLine.text(text + character);
-                resetSearch();
 
                 return false;
             }
@@ -135,7 +133,6 @@
             if (keymap.lowercase[key]) {
                 var character = keymap.lowercase[key];
                 $currentConsoleLine.text(text + character);
-                resetSearch();
 
                 return false;
             }
@@ -144,41 +141,6 @@
             if (e.which == keymap.backspace) {
                 text = text.substr(0, text.length - 1);
                 $currentConsoleLine.text(text);
-                resetSearch();
-
-                return false;
-            }
-
-            // tab auto completes
-            if (e.which == keymap.tab) {
-                var words = searchTerm.split(' ');
-                var lastWord = words[words.length - 1];
-                var newText = searchTerm.substr(0, searchTerm.length - lastWord.length);
-
-                datamodel.getFile(context.currentId, function (folder) {
-                    // need to find all of the search matches
-                    if (matches.length == 0) {
-                        for (var i = 0; i < folder.sortedChildList.length; i++) {
-                            var file = folder.sortedChildList[i];
-                            if (file.name.substr(0, lastWord.length).toLowerCase() == lastWord.toLowerCase()) {
-                                matches.push(file.name);
-                            }
-                        }
-                    }
-
-                    // get the current match and update the command
-                    var filename = matches[searchIndex];
-                    if (filename) {
-                        if (filename.indexOf(' ') != -1) {
-                            filename = '"' + filename + '"';
-                        }
-                        $currentConsoleLine.text(newText + filename);
-                    }
-
-                    searchIndex++;
-                    if (searchIndex >= matches.length)
-                        searchIndex = 0;
-                });
 
                 return false;
             }
@@ -186,9 +148,12 @@
             // escape clears the command line
             if (e.which == keymap.escape) {
                 $currentConsoleLine.html('');
-                resetSearch();
 
                 return false;
+            }
+
+            if (e.which == keymap.tab) {
+            	return false;
             }
 
             // enter evaluates the command
@@ -202,8 +167,8 @@
                     runningCommand = true;
                     var $output = $('<div class="output"></div>');
                     $container.append($output);
-                    $output.html(commandHandler.call(term, text, state));
-					if (runningCommand) {
+                    $output.html(commandHandler.call(this, text, state));
+                    if (runningCommand) {
                          runningCommand = false;
                          newCommandLine();
                          $(document).scrollTop($(document).height());
@@ -216,36 +181,18 @@
             }
 
             $(document).scrollTop($(document).height());
+        };
+
+        init();
+
+        function init() {
+            var welcomeText = (welcome ? welcome : "Welcome to WebREPL!") + '<br /><br />';
+            $container.html(welcomeText);
+            newCommandLine();
+            $body.keydown(onKeyDown);
+            blink(true);
         }
 
-        function resetSearch() {
-            searchTerm = $currentConsoleLine.text();
-            searchIndex = 0;
-            matches = [];
-        }
-
-        function echoOutput(text) {
-            text = '<div class="output">' + text + '</div><br />';
-            echo(text);
-        }
-
-        function echo(text) {
-            $currentConsoleLine.html($currentConsoleLine.html() + text);
-        }
-
-        function newCommandLine() {
-            $container.append('<div><span class="path">' + prompt + '</span><span class="console"></span><span id="cursor">_</span></div>');
-            $currentConsoleLine = $('.console:last');
-        }
-
-        function blink(show) {
-            $('#cursor').toggle(show);
-            setTimeout(function () { blink(!show); }, 600);
-        }
-
-        function cls() {
-        	$container.empty();
-        }
     };
 
 })();

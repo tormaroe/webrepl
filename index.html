@@ -27,7 +27,7 @@
 		/*
 
 		*/
-		var terminal = new skycmd.terminal({ 
+		var terminal = webrepl.terminal({ 
 			
 			/*
 
@@ -68,7 +68,7 @@
 				}
 
 				if(input === "cls") {
-					//$("#container").empty();
+					$("#container").empty();
 					this.cls();
 					return "";
 				}
