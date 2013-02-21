@@ -1,5 +1,17 @@
 (function () {
 
+	/*
+		ISSUES:
+
+		The keymap makes it impossible to write many characters. 
+		My Norwegian keyboard complicates the issue as well.
+
+		TODO:
+
+		Make some fancy colors for demo..
+
+	*/
+
     if (!window.webrepl)
         window.webrepl = {};
 
@@ -87,10 +99,6 @@
         var newCommandLine = function () {
             $container.append('<div><span class="path">' + prompt + '</span><span class="console"></span><span id="cursor">_</span></div>');
             $currentConsoleLine = $('.console:last');
-        };
-
-        var cls = function () {
-        	$container.empty();
         };
 
         var onKeyDown = function (e) {
@@ -203,7 +211,8 @@
 			can use to manipulate the REPL.
         */
         return {
-        	clear: cls
+        	clear: function () { $container.empty(); },
+        	setPrompt: function (text) { prompt = text; }
         	// TODO: Add method to print without giving up control (echo)
         };
     };

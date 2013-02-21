@@ -9,10 +9,19 @@ body {
 .output {
     padding-left: 20px;
     display: inline-block;
+    color: #ddf;
 }
 
-.green {
-    color: #0f0;
+.path {
+    color: red;
+}
+
+.console {
+    color: lightgreen;
+}
+
+#cursor {
+    color: red;
 }
 
 #overlay img {

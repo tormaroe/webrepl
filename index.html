@@ -24,6 +24,10 @@
 	<script type="text/javascript">
 	$(document).ready(function () {
 
+		var definition = function (command, description) {
+			return '<dt style="color:yellow;">' + command + "</dt><dd>" + description + "</dd>";
+		};
+
 		/*
 
 		*/
@@ -42,7 +46,9 @@
 			/*
 
 			*/
-			state: {},
+			state: { 
+				memory: {} 
+			},
 
 			/*
 				The welcome message is displayed by WebREPL when it starts.
@@ -56,23 +62,62 @@
 			commandHandler: function (input, state) {
 				console.log("Handling input '" + input + "' with state " + state);
 
-				if(input === "help") {
+				if (input === "help") {
 					return "<h3>Available commands:</h3>" +
 						"<dl>" +
-						"<dt>about</dt><dd>Display info about WebREPL</dd>" +
-						"<dt>cls</dt><dd>Clear terminal content</dd>" +
-						"<dt>doc</dt><dd>Display documentation about how to use WebREPL for your own purposes</dd>" +
-						"<dt>github</dt><dd>Go to WebREPL Github repository</dd>" +
-						"<dt>setprompt &lt;text&gt;</dt><dd>Sets the prompt to the value given</dd>" +
+						definition("about", "Display info about WebREPL") +
+						definition("cls", "Clear terminal content") +
+						definition("doc", "Display documentation about how to use WebREPL for your own purposes") +
+						definition("github", "Go to WebREPL Github repository") +
+						definition("memory", "Display what you need to remember. See <i>remember</i> command.") +
+						definition("remember &lt;key&gt; &lt;what to remember&gt;", "Illustrates use of WebREPL state. Use this command to store information on various keys. Use <i>memory</i> command to view all remembered items.") +
+						definition("setprompt &lt;text&gt;", "Sets the prompt to the value given") +
 						"</dl>";
 				}
 
-				if(input === "cls") {
+				if (input === "about") {
+					return "WebREPL is a general purpose, JavaScript-based commandline user interface. And it's work in progress...";
+				}
+
+				if (input === "doc") {
+					return "Nothing here yet. Have a look at the page source instead!";
+				}
+
+				if (input === "cls") {
 					terminal.clear();
 					return "";
 				}
+				
+				if (input == "github") {
+					window.document.location = 'http://github.com';
+					return "";
+				}
 
-				return 'unknown command - type "help" for list of supported commands';
+				if (input.substring(0, 8) === "remember") {
+					var inputWithoutCommand = input.substring(9, input.length);
+					var indexOfSpace = inputWithoutCommand.indexOf(" ");
+					var key = inputWithoutCommand.substring(0, indexOfSpace);
+					var value = inputWithoutCommand.substring(indexOfSpace + 1, inputWithoutCommand.length);
+					state.memory[key] = value;
+					return "Stored \"" + value + "\" using key [ " + key + " ]";
+				}
+
+				if (input.substring(0, 9) === "setprompt") {
+					terminal.setPrompt(input.substring(10, input.length) + "&gt; ");
+					return "";
+				}
+
+				if (input === "memory") {
+					var key, output = "";
+					for(key in state.memory)
+						if(state.memory.hasOwnProperty(key))
+							output += "<u>" + key + "</u>: " + state.memory[key] + "<br>";
+					if (output.length > 0)
+						return output;
+					return "Nothing in memory!";
+				}
+
+				return '<span style="background-color:darkred;color:white;padding-left:10px;padding-right:10px;"><strong>unknown command - type "help" for list of supported commands</strong></span>';
 			}
 		});
 
