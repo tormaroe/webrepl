@@ -1,8 +1,20 @@
 <!DOCTYPE html>
+<!--
+
+	This file is both an example of how one can use WebREPL
+	and the main home page of WebREPL itself.
+
+-->
 <html lang="en">
 	<title>WebREPL</title>
 	<link rel="stylesheet" type="text/css" href="webrepl.css">
+
+	<!--
+		WebREPL depends on jQuery. Load it before you load
+		the WebREPL script.
+	-->
 	<script src="http://ajax.aspnetcdn.com/ajax/jQuery/jquery-1.7.1.min.js" type="text/javascript" language="javascript"></script>
+
 	<script type="text/javascript" src="webrepl.js"></script>
 	
 	<div><img src="gfx/webrepl_logo_negative.PNG"></div>
@@ -12,14 +24,56 @@
 	<script type="text/javascript">
 	$(document).ready(function () {
 
+		/*
+
+		*/
 		var terminal = new skycmd.terminal({ 
+			
+			/*
+
+			*/
 			container: $('#container'),
+
+			/*
+
+			*/
 			prompt: '??&gt; ',
+
+			/*
+
+			*/
 			state: {},
-			welcome: 'type "help" for list of supported commands',
+
+			/*
+				The welcome message is displayed by WebREPL when it starts.
+				This slot is OPTIONAL.
+			*/
+			welcome: 'type <strong>help</strong> for list of supported commands',
+
+			/*
+
+			*/
 			commandHandler: function (input, state) {
 				console.log("Handling input '" + input + "' with state " + state);
-				return "handled!<br>asd";
+
+				if(input === "help") {
+					return "<h3>Available commands:</h3>" +
+						"<dl>" +
+						"<dt>about</dt><dd>Display info about WebREPL</dd>" +
+						"<dt>cls</dt><dd>Clear terminal content</dd>" +
+						"<dt>doc</dt><dd>Display documentation about how to use WebREPL for your own purposes</dd>" +
+						"<dt>github</dt><dd>Go to WebREPL Github repository</dd>" +
+						"<dt>setprompt &lt;text&gt;</dt><dd>Sets the prompt to the value given</dd>" +
+						"</dl>";
+				}
+
+				if(input === "cls") {
+					//$("#container").empty();
+					this.cls();
+					return "";
+				}
+
+				return 'unknown command - type "help" for list of supported commands';
 			}
 		});
 

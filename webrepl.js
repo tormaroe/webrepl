@@ -1,4 +1,8 @@
 (function () {
+	
+    if (!window.skycmd)
+        window.skycmd = {};
+
     window.keymap = {
         backspace: 8,
         tab: 9,
@@ -33,12 +37,6 @@
             90: 'Z', 189: '_', 191: '?', 222: '"'
         }
     };
-})();
-
-
-(function () {
-    if (!window.skycmd)
-        window.skycmd = {};
 
     console.log("DEBUG: defining 'terminal'");
 
@@ -62,19 +60,15 @@
         var matches = [];
 
         var runningCommand = false;
+        var term = this;
 
         init();
 
         function init() {
-            var welcomeText = welcome + '<br /><br />';
+            var welcomeText = (welcome ? welcome : "Welcome to WebREPL!") + '<br /><br />';
             $container.html(welcomeText);
-
             newCommandLine();
-
-            //datamodel.getFile();
-
             $body.keydown(onKeyDown);
-
             setTimeout(blink, 600);
         }
 
@@ -208,7 +202,7 @@
                     runningCommand = true;
                     var $output = $('<div class="output"></div>');
                     $container.append($output);
-                    $output.html(commandHandler(text, state));
+                    $output.html(commandHandler.call(term, text, state));
 					if (runningCommand) {
                          runningCommand = false;
                          newCommandLine();
@@ -240,9 +234,6 @@
         }
 
         function newCommandLine() {
-            //var user = datamodel.getUser();
-            //var username = (user && user.name) || '';
-            //$container.append('<div><span class="path">' + username + ':SkyDrive' + context.pwd + '&gt;</span><span class="console"></span><span id="cursor">_</span></div>');
             $container.append('<div><span class="path">' + prompt + '</span><span class="console"></span><span id="cursor">_</span></div>');
             $currentConsoleLine = $('.console:last');
         }
@@ -250,6 +241,10 @@
         function blink(show) {
             $('#cursor').toggle(show);
             setTimeout(function () { blink(!show); }, 600);
+        }
+
+        function cls() {
+        	$container.empty();
         }
     };
 
