@@ -3,7 +3,7 @@
     if (!window.webrepl)
         window.webrepl = {};
 
-    window.keymap = {
+    var keymap = {
         backspace: 8,
         tab: 9,
         enter: 13,
@@ -38,20 +38,51 @@
         }
     };
 
+    var scrollBottom = function () {
+    	$(document).scrollTop($(document).height());
+    };
 
     var blink = function (show) {
         $('#cursor').toggle(show);
         setTimeout(function () { blink(!show); }, 600);
     };
 
-    console.log("DEBUG: defining 'terminal'");
+    var makeHistoryController = function () {
+		var commandHistory = []
+		  , commandCount = 0;
+        
+    	return {
+    		push: function (text) {
+                commandHistory.push(text);
+                commandCount = commandHistory.length;
+    		},
+    		hasUp: function () { return commandCount > 0; },
+    		up: function () {
+    			if (this.hasUp()) {
+                    commandCount--;
+                    return commandHistory[commandCount];
+                }
+            },
+            down: function () {
+	            if (commandCount < commandHistory.length - 1) {
+                    commandCount++;
+                    return commandHistory[commandCount];
+                }
+                else {
+                    commandCount = commandHistory.length;
+                    return "";
+                }
+            }
+    	};
+    };
 
-    webrepl.terminal = function (config) {
+    webrepl.make = function (config) {
 
     	var $container = config.container;
     	var prompt = config.prompt;
-
         var $currentConsoleLine;
+        var history = makeHistoryController();
+        var runningCommand = false;
 
         var newCommandLine = function () {
             $container.append('<div><span class="path">' + prompt + '</span><span class="console"></span><span id="cursor">_</span></div>');
@@ -62,24 +93,8 @@
         	$container.empty();
         };
 
-    	var commandHandler = config.commandHandler;
-    	var state = config.state;
-    	var welcome = config.welcome;
-
-        var currentPath = '';
-        var currentFolder = '';
-        var commandHistory = [];
-        var commandCount = 0;
-        var firstname = '';
-        var loggedIn = false;
-        var currentId;
-
-        var runningCommand = false;
-        var term = this;
-
         var onKeyDown = function (e) {
             var key = e.which;
-            var handled = false;
             var text = $currentConsoleLine.text();
 
             // ignore any keystrokes with alt, ctrl or cmd
@@ -89,7 +104,7 @@
                     if (runningCommand) {
                         runningCommand = false;
                         newCommandLine();
-                        $(document).scrollTop($(document).height());
+                        scrollBottom();
                     }
                 }
 
@@ -98,25 +113,16 @@
 
             // up should go back in history
             if (e.which == keymap.up) {
-                if (commandCount > 0) {
-                    commandCount--;
-
-                    $currentConsoleLine.html(commandHistory[commandCount]);
-                }
+            	if (history.hasUp()) {
+            		$currentConsoleLine.html(history.up());
+            	}
 
                 return false;
             }
 
             // down should go forward in history
             if (e.which == keymap.down) {
-                if (commandCount < commandHistory.length - 1) {
-                    commandCount++;
-                    $currentConsoleLine.html(commandHistory[commandCount]);
-                }
-                else {
-                    $currentConsoleLine.html('');
-                    commandCount = commandHistory.length;
-                }
+            	$currentConsoleLine.html(history.down());
 
                 return false;
             }
@@ -167,37 +173,39 @@
                     runningCommand = true;
                     var $output = $('<div class="output"></div>');
                     $container.append($output);
-                    $output.html(commandHandler.call(this, text, state));
+                    $output.html(config.commandHandler(text, config.state));
                     if (runningCommand) {
-                         runningCommand = false;
-                         newCommandLine();
-                         $(document).scrollTop($(document).height());
-                     }
-                    $(document).scrollTop($(document).height());
-                    commandHistory.push(text);
-                    commandCount = commandHistory.length;
+						runningCommand = false;
+						newCommandLine();
+						//scrollBottom();
+                    }
+                    scrollBottom();
+                    history.push(text);
                 }
                 return false;
             }
 
-            $(document).scrollTop($(document).height());
+            scrollBottom();
+        };
+
+        var init = function () {
+            var welcomeText = (config.welcome ? config.welcome : "Welcome to WebREPL!") + '<br /><br />';
+            $container.html(welcomeText);
+            newCommandLine();
+            $('body').keydown(onKeyDown);
+            blink(true);
         };
 
         init();
 
-        function init() {
-            var welcomeText = (welcome ? welcome : "Welcome to WebREPL!") + '<br /><br />';
-            $container.html(welcomeText);
-            newCommandLine();
-            $body.keydown(onKeyDown);
-            blink(true);
-        }
-
+        /*
+			Return a terminal object which the WebREPL client code
+			can use to manipulate the REPL.
+        */
+        return {
+        	clear: cls
+        	// TODO: Add method to print without giving up control (echo)
+        };
     };
 
 })();
-
-$(document).ready(function () {
-    window.$document = $(document);
-    window.$body = $('body');
-});

@@ -27,7 +27,7 @@
 		/*
 
 		*/
-		var terminal = webrepl.terminal({ 
+		var terminal = webrepl.make({ 
 			
 			/*
 
@@ -68,8 +68,7 @@
 				}
 
 				if(input === "cls") {
-					$("#container").empty();
-					this.cls();
+					terminal.clear();
 					return "";
 				}
 
